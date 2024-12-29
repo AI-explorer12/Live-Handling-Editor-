@@ -8,6 +8,9 @@ This script allows you to make live changes to a vehicle's handling and tune the
 **Preview**
 ![image](https://i.imgur.com/wglT3Ka.jpegg)
 
-https://i.imgur.com/MzGBmJk.jpeg 
 
-https://i.imgur.com/HfkAWOG.jpeg
+![MzGBmJk](https://github.com/user-attachments/assets/48e4f7e3-0079-4609-8e3b-6a6a7ba7e1a2)
+
+![HfkAWOG](https://github.com/user-attachments/assets/e63248f2-22fe-4a44-9090-77d863781361)
+
+
