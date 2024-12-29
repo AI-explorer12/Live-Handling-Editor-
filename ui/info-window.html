@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Info Window</title>
+    <style>
+        /* Tooltip styling */
+        .tooltip {
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 14px;
+            z-index: 1000;
+            pointer-events: none;
+            opacity: 1;
+            transition: opacity 0.2s;
+        }
+        
+        .tooltip.hidden {
+            opacity: 0;
+        }
+        
+        /* Info window container styling */
+        .info-window-container {
+            position: fixed;
+            top: 20%;
+            right: 20px;
+            width: 400px;
+            height: 500px;
+            background-color:  rgba(42, 42, 45,.8);
+            border-radius: 6px;
+            border: 1px solid #000000;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            overflow: hidden;
+        }
+
+        /* Header bar for dragging */
+        #info-window-header {
+            height: 40px;
+            background-color:rgba(42, 42, 45,.6);
+            color: #fff;
+            text-align: center;
+            line-height: 40px;
+            cursor: move;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 2;
+        }
+
+        /* Content area */
+        #info-window-content {
+            position: absolute;
+            top: 40px;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            padding: 10px;
+            overflow-y: auto;
+            color: #fff; /* Set text color to desired color */
+        }
+
+        /* Highlighted section */
+        .highlight {
+            color: #00CFFF; /* Desired text color when highlighted */
+            background-color: rgba(0, 207, 255, 0.1); /* Optional background color */
+                }
+
+        .text-highlight {
+            color: #00CFFF !important; /* Bright blue color */
+            transition: color 0.3s ease;
+        }
+        
+        .info-window-container h3,
+        .info-window-container p,
+        .info-window-container ul,
+        .info-window-container li {
+            transition: color 0.3s ease;
+        }
+
+</style>
+</head>
+<body>
+    <div id="info-window-container"></div> <!-- Container for dynamically loaded content -->
+</body>
+</html>

@@ -1,0 +1,282 @@
+{
+	"version":"1.0",
+	"notes":{
+		"fMass" : {
+			"description" : "Vehicle mass in kilograms. Higher = slower acceleration and worse handling.",
+			"extra": "Mass affects collision responses, making heavier vehicles harder to stop or move upon impact. It also influences how a car feels under cornering; higher mass causes more body roll. Usual ranges are 800 kg for small cars to 3000+ kg for large trucks."
+		},
+		"fInitialDragCoeff" : {
+			"description" : "Aerodynamic drag coefficient. Higher = more drag (slower top speed).",
+			"extra":[
+				"Formula: DragCoefficientCd/10.",
+				"Increasing this value causes more air resistance, limiting top speed and reducing acceleration, especially at higher velocities.",
+				"Common values range from 1.5 to 5.0, depending on the vehicle type."
+			]
+		},
+		"fDownforceModifier" : {
+			"description" : "Downforce adds grip by pushing the car towards the ground. Higher = more grip at higher speeds.",
+			"extra":[
+				"The force is proportional to speed and aids in keeping the car stable.",
+				"No spoiler: Downforce = fDownforceModifier * 0.035.",
+				"Spoiler: Downforce = fDownforceModifier * 0.035 * 1.25.",
+				"Values typically range between 1.0 and 100.0, with downforce reaching its limit at 90% of fInitialDriveMaxFlatVel."
+			]
+		},
+		"fPercentSubmerged" : {
+			"description" : "Percentage of the vehicle submerged before sinking.",
+			"extra": "This affects how quickly a vehicle sinks when in water. Higher values make the vehicle float longer before submerging. Most cars have values around 85%, but off-road vehicles or boats may have lower values for better buoyancy."
+		},
+		"vecCenterOfMassOffset" : {
+			"description" : "Shifts the car’s center of mass relative to the model center.",
+			"extra": "Adjusting this can dramatically change the handling behavior. A lower center of mass improves stability, reducing roll, while an offset center of mass might make the car behave unpredictably in corners. Negative values lower the center of mass, commonly used to reduce body roll in high-performance vehicles."
+		},
+		"vecInertiaMultiplier" : {
+			"description" : "Inertia multiplier affects vehicle rotation in all directions.",
+			"extra": [
+				"The vector controls how fast the car rotates during maneuvers. Increasing any axis (X, Y, Z) will slow down the rotation on that axis, providing more stability. Reducing values increases agility but can make the vehicle harder to control.",
+				"the x axis affects how quickly the car shifts forward and back under braking and acceleration and how it rotates end over end in the air,",
+				"the y axis affects how quickly the car shifts from side to side when cornering (or in the air)",
+				"the z axis affects how the car rotates around the middle, which manifests in normal driving as how quickly the vehicle appears to react to steering inputs. Recommend keeping the z value above 2.0 unless you want arcade style immediate reaction to steering inputs"
+			]
+		},
+		"fDriveBiasFront" : {
+			"description" : "Drive distribution. 1.0 = full front-wheel drive, 0.0 = full rear-wheel drive.",
+			"extra" : [
+				"This controls which wheels get more power. AWD vehicles usually have values between 0.2 and 0.8.",
+				"Values over 0.9 snap to 1.0 (full front) and under 0.1 snap to 0.0 (full rear).",
+				"Changing this alters cornering dynamics; front-wheel-drive cars understeer more, while rear-wheel-drive cars tend to oversteer."
+			]
+		},
+		"nInitialDriveGears" : {
+			"description" : "Number of forward gears. Higher = more gears (usually better acceleration).",
+			"extra" : [
+				"Tipically set to 6 gears.",
+				"Vehicles have shorter gears for gears 7 and up, and vehicles can't properly downshift from 8th gear and up."
+			]
+		},
+		"fInitialDriveForce" : {
+			"description" : "Base (engine) torque, which is applied to the wheels. Higher = more acceleration.",
+			"extra": [
+				"Formula: TorqueNm/CurbWeightKg.",
+				"Current gear and gear ratio affect output at the wheels.",
+				"The game uses a flat-ish torque curve, reducing torque after 80% RPM to 60% torque.",
+				"Value: 0.01 - 2.0 and above. 1.0 uses drive force calculation unmodified. Values less than 1.0 will in effect give the vehicle less drive force and values greater than 1.0 will produce more drive force. Most cars have between 0.10 and 0.40."
+			]
+		},
+		"fDriveInertia" : {
+			"description": "How fast the engine gains and loses revs. Higher = faster acceleration changes.",
+			"extra": [
+				"This is while drive is not engaged (handbrake, or clutch/neutral).",
+				"Low values reduce acceleration, but high values may not increase acceleration beyond fInitialDriveForce capability.",
+				"Value: 0.01 - 2.0. Default value is 1.0, or no modification of drive intertia. Bigger value = quicker redline)"
+			]
+		},
+		"fClutchChangeRateScaleUpShift" : {
+			"description" : "Upshift speed. Higher = faster shifts.",
+			"extra" : [
+				"Formula: 0.9/ShiftTimeSeconds.",
+				"1.0 completes a shift in 0.90 seconds.",
+				"2.0 completes a shift in 0.45 seconds, etc."
+			]
+		},
+		"fClutchChangeRateScaleDownShift" : {
+			"description" : "Downshift speed. Higher = faster shifts.",
+			"extra": [
+				"Similar to fClutchChangeRateScaleUpShift; lower values result in slower downshifts."
+			]
+		},
+		"fInitialDriveMaxFlatVel" : {
+			"description" : "Theoretical top speed in km/h. Higher = faster top speed.",
+			"extra" : [
+				"Formula: Multiply the number in the file by 0.82 to get the speed in mph or multiply by 1.32 to get kph. To find the right value for a given kph figure, kph * 0.75. To convert mph, multiply by 1.22.",
+				"fInitialDriveForce and fInitialDragCoeff impact actual top speed.",
+				"Vehicles can accelerate beyond this, or might not reach this if gearing or torque isn't sufficient."
+			]
+		},
+		"fBrakeForce": {
+			"description" : "Force used to brake the wheels. Higher = stronger brakes.",
+			"extra" : [
+				"Advice: Set this just high enough that wheels lock up or ABS kicks in, at full braking.",
+				"This allows analog input users to properly modulate brake input.",
+				"To use all of a vehicles traction for braking fBrakeForce must be higher than fTractionCurveMax / 4 (only tested with cars)"
+			]
+		},
+		"fBrakeBiasFront": {
+			"description" : "Distribution of brake force. Higher = more front braking.",
+			"extra": [
+				"1.0 only brakes the front wheels.",
+				"0.0 only brakes the rear wheels.",
+				"0.5 brakes all wheels evenly.",
+				"Advice: Put this slightly in front of the weight distribution."
+			]
+		},
+		"fHandBrakeForce": {
+			"description" : "Force used to brake the rear wheels with the handbrake Bigger number = harder braking.",
+			"extra" : [
+				"Advice: Set this sufficiently high, so it always locks up the rear wheels for effective drifts."
+			]
+		},
+		"fSteeringLock": {
+			"description" : "Maximum steering angle in degrees. Higher = more steering angle.",
+			"extra": [
+				"Increasing this value provides sharper steering at the cost of stability during high-speed turns. Typical values range from 30 to 45 degrees for street vehicles.",
+				"fSteeringLock and fTractionCurveLateral is in harmony when fSteeringLock = fTractionCurveLateral * 2. A higher steering lock value will cause the vehicle to either understeer or spin out easily. A low steering lock will cause the vehicle to have fake understeer"
+			]
+		},
+		"fTractionCurveMax": {
+			"description" : "Grip when tires are not slipping. Higher = more grip.",
+			"extra": [
+				"1.0 allows for about 1g of cornering grip.",
+				"maximum cornering/acceleration coefficient of grip. Effectively the peak grip status before any loss of grip."
+			]
+		},
+		"fTractionCurveMin": {
+			"description" : "Grip when tires are slipping. Lower = less grip during slip.",
+			"extra": [
+				"Set this about 10% lower than fTractionCurveMax for realistic behavior.",
+				"liding cornering/acceleration coefficient of grip. Effectively the grip status after loss of grip, e.g. spinning tires, oversteer, understeer.."
+			]
+		},
+		"fTractionCurveLateral": {
+			"description" : "Optimal slip angle before grip decreases. Higher = more gradual loss.",
+			"extra": [
+				"Low values give fast response to steering but can cause abrupt loss of grip.",
+				"Shape of lateral traction curve (peak traction position in degrees sideways = fTractionCurveLateral / 2). Lower values make the vehicle's grip more responsive but less forgiving to loss of traction. Higher values make the vehicle's grip less responsive but more forgiving to loss of traction. Also known as slip angle"
+			]
+		},
+		"fTractionSpringDeltaMax": {
+			"description": "Max distance of lateral sidewall travel during a slide.",
+			"extra": "This value affects how the vehicle responds when cornering. A higher value will pull the car more into the corner after a slide."
+		},
+		"fLowSpeedTractionLossMult": {
+			"description" : "Grip loss at low speeds. Higher = more loss.",
+			"extra" : [
+				"This value affects initial grip when accelerating from a stop.",
+				"Advice: Turn this off (0.0) or set it very low for realistic behavior.",
+				"Decreasing value will cause less burnout, less sliding at start. However, the higher value, the more burnout car gets. Default is 1.0. A completely artificial force."
+			]
+		},
+		"fCamberStiffnesss": {
+			"description" : "Camber stiffness affects lateral grip. Higher = more grip.",
+			"extra": [
+				"Negative values result in uphill force, positive values result in downhill force.",
+				"Values between 0.0 and 1.0 seem natural, allowing moderate camber effects.",
+				"How much the vehicle is pushed towards its roll direction. Road camber also affects roll and applied forces."
+			]
+		},
+		"fTractionBiasFront": {
+			"description" : "Traction distribution between front and rear. Higher = more front grip.",
+			"extra": [
+				"1.0 or 0.0 cause unrealistic behavior, with tires disappearing.",
+				"0.01 = only rear axle has traction. 0.99 = only front axle has traction. 0.5 = both axles have equal traction.",
+				"Advice: About 0.48 gives a balanced grip distribution."
+			]
+		},
+		"fTractionLossMult": {
+			"description" : "Multiplier for grip loss caused by different surfaces. Higher = more loss.",
+			"extra": [
+					"A value of 1.0 represents the base grip loss as defined in materials.dat.",
+					"Basically it affects how much grip is changed when driving on asphalt and mud (the higher, the more grip you loose, making car less responsive and prone to sliding)."
+			]
+		},
+		"fSuspensionForce": {
+			"description": "Suspension spring rate. Higher = stiffer suspension.",
+			"extra": " 1 / (Force * NumWheels) gives the lower limit for zero force at full extension. This affects the ride height and how the suspension handles bumps. Can help if car is easily flipped over when turning."
+		},
+		"fSuspensionCompDamp": {
+			"description": "Suspension compression damping. Higher = harder compression.",
+			"extra": [
+				"Values over half fSuspensionForce can reduce grip during compression.",
+				"Lower values result in softer compression, allowing more give in the suspension."
+			]
+		},
+		"fSuspensionReboundDamp": {
+			"description": "Suspension rebound damping. Higher = slower rebound.",
+			"extra": [
+				"Higher values result in slower suspension return after compression, leading to more stability.",
+				"Adding fSuspensionCompDamp + fSuspensionReboundDamp to equal fSuspensionForce gives a balanced suspension."
+			]
+		},
+		"fSuspensionUpperLimit": {
+			"description" : "Max suspension compression travel upward from default. In meters.",
+			"extra": "Higher values give more suspension travel, ideal for off-road vehicles, while lower values are suited for sports cars with limited suspension movement."
+		},
+		"fSuspensionLowerLimit": {
+			"description": "Max suspension extension travel downward from default. In meters.",
+			"extra": "Lower values give more ground clearance, useful for off-road cars or SUVs."
+		},
+		"fSuspensionRaise": {
+			"description" : "Raises or lowers vehicle height from default. In meters.",
+			"extra": "This value adjusts ride height. Positive values raise the car (good for off-roading), while negative values lower the car (good for racing)."
+		},
+		"fSuspensionBiasFront": {
+			"description" : "Distribution of suspension force. Higher = more front suspension force.",
+			"extra": [
+				"0.5 gives equal force distribution.",
+				"Force damping scale front/back. If more wheels at back (e.g. trucks) need front suspension to be stronger. This value determines which suspension is stronger, front or rear. If value is above 0.50 then front is stiffer, when below, rear.",
+				"For multi-axle vehicles (e.g., Dubsta 6x6), adjust to balance the load distribution across axles."
+			]
+		},
+		"fAntiRollBarForce": {
+			"description" : "Anti-roll bar strength. Higher = less body roll.",
+			"extra": "Anti-roll bars reduce body roll during cornering, improving stability. Higher values are suited for sports cars, while lower values may suit vehicles like trucks or SUVs."
+		},
+		"fAntiRollBarBiasFront": {
+			"description" : "Distribution of anti-roll bar force. Higher = more front force.",
+			"extra": [
+				"1.0: Only the front axle has an anti-roll bar.",
+				"0.0: Only the rear axle has an anti-roll bar.",
+				"0.5: Both axles have equal anti-roll bar force."
+			]
+		},
+		"fRollCentreHeightFront": {
+			"description" : "Roll center height for the front axle. In meters.",
+			"extra": [
+				"Placing this value close to the center of mass height reduces body roll.",
+				"Higher values than the center of mass can lead to negative body roll."
+			]
+		},
+		"fRollCentreHeightRear": {
+			"description": "Roll center height for the rear axle. In meters.",
+			"extra": "This behaves similarly to fRollCentreHeightFront. Adjust to fine-tune handling and reduce body roll."
+		},
+		"fCollisionDamageMult": {
+			"description" : "Multiplier for collision damage. Higher = more damage.",
+			"extra": "This value directly scales the damage taken during collisions. Common values range from 0.5 (for less damage) to 2.0 (for more damage)."
+		},
+		"fWeaponDamageMult": {
+			"description" : "Multiplier for weapon damage. Higher = more damage.",
+			"extra": "This scales the damage a vehicle takes from weapon impacts. For example, higher values make it easier for weapons to destroy or damage the vehicle."
+		},
+		"fDeformationDamageMult": {
+			"description": "Multiplier for deformation damage. Higher = more deformation.",
+			"extra": "This determines how much the vehicle deforms upon impact. Higher values will make the car crumple more easily, while lower values reduce visible deformation."
+		},
+		"fEngineDamageMult": {
+			"description": "Multiplier for engine damage. Higher = more engine damage.",
+			"extra": "This affects how easily the engine is damaged during collisions. High values will cause the engine to take more damage, potentially leading to failure after a few strong hits."
+		},
+		"fPetrolTankVolume": {
+			"description" : "Fuel tank capacity. In liters. Higher = more fuel.",
+			"extra" : [
+				"Larger fuel tanks take longer to drain, useful in mods with fuel consumption.",
+				"Running out of fuel causes the vehicle to slow and stop, simulating real-life behavior."
+			]
+		},
+		"fOilVolume": {
+			"description" : "Engine oil capacity. In liters. Higher = more oil.",
+			"extra" : [
+				"Engine oil starts leaking if the engine is damaged below 200 health.",
+				"Values below 1.25L (if total capacity is 5L) cause engine damage due to low oil."
+			]
+		},
+		"vecSeatOffsetDist": {
+			"description" : "Offset distance for seat positions. Higher = more offset.",
+			"extra": "This affects where characters sit in relation to the vehicle's model. Adjust to fix clipping issues or to customize the seat layout for different character models."
+		},
+		"nMonetaryValue": {
+			"description" : "Vehicle monetary value. Higher = more expensive.",
+			"extra": "This affects the in-game price of the vehicle, influencing repair costs and other price-related aspects in certain game modes."
+		}
+	}
+}

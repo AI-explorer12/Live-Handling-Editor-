@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Babicz Handling Editor</title>
+    <script src="script.js" defer></script>
+    <style>
+        /* Main container */
+        #container {
+            position: absolute;
+            left: 1vw;
+            top: 3vh;
+            width: 34vw;
+            height: 92vh;
+            background-color: rgba(42, 42, 45,);
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;  /* Keep column layout */
+            resize: both;  /* Enable resizing */
+            overflow: hidden;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+        }
+        /* Resize handles */
+        .resize-handle {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.1);
+        }
+        /* Draggable header */
+        #header-bar {
+            width: 100%;
+            height: 30px;
+            background-color: rgba(42, 42, 45, 0.5);
+            cursor: move;  /* Change the cursor to indicate it's draggable */
+        }
+
+        /* Content Area (flex container) */
+        #content-area {
+            display: flex;
+            flex-grow: 1;  /* Allow the content-area to grow when resizing */
+            overflow: hidden;
+            height: 100%;
+        }
+
+        /* Sidebar styling */
+        #sidebar {
+            width: 6%;  /* Adjust this value as needed */
+            background-color: rgba(42, 42, 45,.8);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1vh;
+            border-right: 1px solid #ffffff;
+            padding: 1vh;
+            flex-shrink: 1;
+            height: 100%;  /* Prevent shrinking below its width */
+        }
+
+        .sidebar-btn {
+            padding: 1vh;
+            width: 90%;
+            background-color: transparent;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background-color 0.3s;
+        }
+        /* Set sidebar icons to white initially */
+        .sidebar-btn img {
+            filter: invert(100%) brightness(100%);
+            transition: filter 0.3s ease; /* Smooth transition for hover */
+        }
+        .sidebar-btn:hover {
+            
+            filter: invert(56%) sepia(85%) saturate(631%) hue-rotate(166deg) brightness(200%) contrast(105%);
+            /* This filter approximates the #00CFFF color. You can adjust the values to get closer */
+            transition: filter 0.3s ease; /* Smooth transition */
+            
+        }
+
+        .sidebar-icon {
+            background-image: url('ui/img/icon1.png');
+            /* Other styles */
+        }
+        
+        .sidebar-btn img {
+            width: 32px;
+            height: 32px;
+        }
+
+        /* Main content area */
+        #main-content {
+            flex-grow: 1;  /* Ensure main content grows to fill remaining space */
+            height: auto;
+            width: 100%;  /* Ensure it takes full height of container */
+            overflow-y: auto;  /* Allow vertical scrolling */
+            background-color: rgba(42, 42, 45,.8); /* Background color */
+            padding: 0vh;
+            box-sizing: border-box;
+        }
+
+        /* Search bar styling */
+        #search-bar {
+            width: 95%;  
+            margin-bottom: 2vh;
+            padding: 1vh;
+            font-size: 1.6vh;
+            border-radius: 10px;
+            border: 1px solid black;
+            background-color: transparent;
+            color: rgb(255, 255, 255);
+        }
+
+        /* Table structure adjustments */
+        table {
+            border-collapse: collapse;  /* Remove gaps between cells */
+            width: 100%;  /* Full width table */
+        }
+
+        th, td {
+            font-size: 1.8vh;
+            padding: 0.5vh;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: clip; /* Prevents long text from overflowing */
+            color: white;
+        }
+        td {
+            text-align: left;  /* Ensure that table content is aligned to the left */
+            padding: 5px;  /* Ensure minimal padding between columns */
+            margin: 0;
+        }
+        /* Flex layout for the Base and Current input fields */
+        .value {
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            gap: 5px;  /* Minimal gap between the two inputs */
+        }
+        
+        th {
+            text-align: center;  /* Center the header text */
+            vertical-align: middle;
+            color: rgb(255, 255, 255); /* header color */
+        }
+        th:nth-child(1), td:nth-child(1) { /* Name column selector */
+            width: 350px;    /* Set a fixed width for the Name column */
+            text-align: start;
+        }
+        
+        /* History column width */
+        th:nth-child(2), td:nth-child(2) { /* Adjust for History column */
+            width: 50px;  /* Fixed width for History */
+            text-align: center;  /* Center the refresh button in History column */
+        }
+        /* Base/Current Column */
+        th:nth-child(3), td:nth-child(3) { /* Adjust for Base/Current column */
+            width: auto;  /* Take up remaining space */
+            text-align: start;
+        }
+
+        /* Alternating row colors */
+        tbody tr:nth-child(odd) > td {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        tbody tr:nth-child(even) > td {
+            background-color: rgba(71, 71, 71, 0.1);
+        }
+        tbody tr:hover {
+            background-color: transparent; /* No background change on hover */
+            border: 3px solid #00CFFF; /* Show border on hover */
+            transition: border 0.3s ease; /* Smooth transition */
+           
+        }
+        /* Change Name column color and input fields color on row hover */
+        tbody tr:hover td:nth-child(1),
+        tbody tr:hover input {
+            color: #00CFFF; /* Change text and input value color on hover */
+            filter: brightness(2); /* Increase brightness by 20% */
+        }
+        tbody tr:hover input {
+            color: #00CFFF; /* Change input text color on hover */
+           
+        }
+        .base-input, .curr-input {
+            width: 50px;  /* Adjust width of input fields */
+            padding: 5px;
+            margin: 0;
+            margin-right: 5px;
+            border-radius: 5px;
+            background-color: rgba(100, 100, 100, 0.2);  /* Slightly different background */
+            color: #ffffff;
+        }
+        .curr-input {
+            background-color: rgba(100, 100, 100, 0.2);  /* Different background for Current */
+            pointer-events: none;  /* Ensure it's read-only */
+        }
+        .Icon{
+            width: 45%;
+            object-fit: cover;
+        }
+
+        
+        .vec-input {
+            display: inline-block;
+            width: 50px;
+            margin-right: 5px;
+            padding: 0.5vh;
+            border-radius: 5px;
+            background-color: rgba(100, 100, 100, 0.2);  /* Slightly different background */
+            color: #ffffff;
+        }
+
+
+            /* Styles for the stats container */
+        #stats-container {
+            display: none;  /* Hidden by default */
+            padding: 1vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Styles for the stats and performance tables */
+        #stats-table, #performance-metrics-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 2vh;
+        }
+
+        #stats-table th, #stats-table td,
+        #performance-metrics-table th, #performance-metrics-table td {
+            border: 2px solid #00eaff;
+            padding: 8px;
+        }
+
+        #stats-table th, #performance-metrics-table th {
+            background-color: rgba(71, 71, 71, 0.1);
+            text-align: left;
+        }
+
+        /* Style for the performance test button */
+        #performance-test-button {
+            width: 100%;
+            padding: 15px;
+            font-size: 16px;
+            margin-bottom: 2vh;
+            cursor: pointer;
+            background-color: #4CAF50; /* Green background */
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+
+        #performance-test-button:hover {
+            background-color: #45a049; /* Darker green on hover */
+        }
+
+        .resize-handle.top { top: 0; left: 0; right: 0; height: 5px; cursor: n-resize; }
+        .resize-handle.right { top: 0; right: 0; bottom: 0; width: 5px; cursor: e-resize; }
+        .resize-handle.bottom { bottom: 0; left: 0; right: 0; height: 5px; cursor: s-resize; }
+        .resize-handle.left { top: 0; left: 0; bottom: 0; width: 5px; cursor: w-resize; }
+
+
+    </style>
+</head>
+<body>
+    <div id="container">
+        <!-- Draggable Header -->
+        <div id="header-bar">Drag here</div>
+
+        
+        <!-- Content Area with Sidebar and Main Content -->
+        <div id="content-area">
+            <!-- Sidebar -->
+            <div id="sidebar">
+                <!-- Car Icon Button -->
+                <button class="sidebar-btn" id="main-table-button">
+                    <img src="img/icon1.png" class="icon" alt="Car Icon">  <!-- Use a car icon image -->
+                </button>
+
+                <!-- Stats Button -->
+                <button class="sidebar-btn" id="stats-button">
+                    <img src="img/icon3.png" class="icon" alt="Stats Icon">
+                </button>
+
+                <!-- More Info Button -->
+                <button class="sidebar-btn" id="info-btn" onclick="openInfoWindow()">
+                    <img src="img/icon4.png" class="icon" alt="Info Icon">  <!-- Use an info icon image -->
+                </button>
+
+                <!-- File Export Icon Button -->
+                <button class="sidebar-btn" onclick="Export()">
+                    <img src="img/icon2.png" class="icon" alt="File Export Icon">  <!-- Use a file export icon image -->
+                </button>
+            </div>
+
+            <!-- Main Content -->
+            <div id="main-content">
+                <!-- Search Bar -->
+                <input type="text" id="search-bar" placeholder="Search values.">
+
+                <!-- Main Table -->
+                <div id="main-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>History</th>
+                                <th> Base</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                    <tr><td>fMass</td><td><div class="refresh-btn" onclick="restorePreviousValue('fMass')">&#x21bb;</div></td><td><div class="value"><input id="fMass" placeholder="0.0" class="base-input" type="number" value="0.0"><input id="fMassCurr" placeholder="0.0" class="curr-input" type="number" value="0.0" readonly></div><div class="button add" onclick="Add('fMass')"></div><div class="button subtract" onclick="Subtract('fMass')"></div></td></tr>
+                    <tr><td>fInitialDragCoeff</td><td><div class="refresh-btn" onclick="restorePreviousValue('fInitialDragCoeff')">&#x21bb;</div></td><td><div class="value"><input id="fInitialDragCoeff" placeholder="0.0" class="base-input" type="number" step="0.01" value="0.0"><input id="fInitialDragCoeffCurr" placeholder="0.0" class="curr-input" type="number" step="0.01" value="0.0" readonly></div><div class="button add" onclick="Add('fInitialDragCoeff')"></div><div class="button subtract" onclick="Subtract('fInitialDragCoeff')"></div></td></tr>
+                    <tr><td>fPercentSubmerged</td><td><div class="refresh-btn" onclick="restorePreviousValue('fPercentSubmerged')">&#x21bb;</div></td><td><div class="value"><input id="fPercentSubmerged" placeholder="0.0" class="base-input" type="number" value="0.0"><input id="fPercentSubmergedCurr" placeholder="0.0" class="curr-input" type="number" value="0.0" readonly></div><div class="button add" onclick="Add('fPercentSubmerged')"></div><div class="button subtract" onclick="Subtract('fPercentSubmerged')"></div></td></tr>
+                    <tr><td>fDownForceModifier</td><td><div class="refresh-btn" onclick="restorePreviousValue('fDownForceModifier')">&#x21bb;</div></td><td><div class="value"><input id="fDownForceModifier" placeholder="0.0" class="base-input" type="number" value="0.0"><input id="fDownForceModifierCurr" placeholder="0.0" class="curr-input" type="number" value="0.0" readonly></div><div class="button add" onclick="Add('fDownForceModifier')"></div><div class="button subtract" onclick="Subtract('fDownForceModifier')"></div></td></tr>
+                    <tr><td>vecCentreOfMassOffset</td><td><div class="refresh-btn" onclick="restorePreviousValue('vecCentreOfMassOffset')">&#x21bb;</div></td><td><div class="value"><input id="vecCentreOfMassOffset_x" class="vec-input" type="number" value="0.0"><input id="vecCentreOfMassOffset_y" class="vec-input" type="number" value="0.0"><input id="vecCentreOfMassOffset_z" class="vec-input" type="number" value="0.0"></div></td></tr>
+                    <tr><td>vecInertiaMultiplier</td><td><div class="refresh-btn" onclick="restorePreviousValue('vecInertiaMultiplier')">&#x21bb;</div></td><td><div class="value"><input id="vecInertiaMultiplier_x" class="vec-input" type="number" value="0.0"><input id="vecInertiaMultiplier_y" class="vec-input" type="number" value="0.0"><input id="vecInertiaMultiplier_z" class="vec-input" type="number" value="0.0"></div></td></tr>
+                    <tr><td>fDriveBiasFront</td><td><div class="refresh-btn" onclick="restorePreviousValue('fDriveBiasFront')">&#x21bb;</div></td><td><div class="value"><input id="fDriveBiasFront" placeholder="0.0" class="base-input" type="number" value="0.0"><input id="fDriveBiasFrontCurr" placeholder="0.0" class="curr-input" type="number" value="0.0" readonly></div><div class="button add" onclick="Add('fDriveBiasFront')"></div><div class="button subtract" onclick="Subtract('fDriveBiasFront')"></div></td></tr>
+                    <tr><td>nInitialDriveGears</td><td><div class="refresh-btn" onclick="restorePreviousValue('nInitialDriveGears')">&#x21bb;</div></td><td><div class="value"><input id="nInitialDriveGears" placeholder="0" class="base-input" type="number" value="0"><input id="nInitialDriveGearsCurr" placeholder="0" class="curr-input" type="number" value="0" readonly></div><div class="button add" onclick="Add('nInitialDriveGears')"></div><div class="button subtract" onclick="Subtract('nInitialDriveGears')"></div></td></tr>
+                    <tr><td>fInitialDriveForce</td><td><div class="refresh-btn" onclick="restorePreviousValue('fInitialDriveForce')">&#x21bb;</div></td><td><div class="value"><input id="fInitialDriveForce" placeholder="0.0" class="base-input" type="number" step="0.01" value="0.0"><input id="fInitialDriveForceCurr" placeholder="0.0" class="curr-input" type="number" step="0.01" value="0.0" readonly></div><div class="button add" onclick="Add('fInitialDriveForce')"></div><div class="button subtract" onclick="Subtract('fInitialDriveForce')"></div></td></tr>
+                    <tr><td>fDriveInertia</td><td><div class="refresh-btn" onclick="restorePreviousValue('fDriveInertia')">&#x21bb;</div></td><td><div class="value"><input id="fDriveInertia" placeholder="0.0" class="base-input" type="number" step="0.01" value="0.0"><input id="fDriveInertiaCurr" placeholder="0.0" class="curr-input" type="number" step="0.01" value="0.0" readonly></div><div class="button add" onclick="Add('fDriveInertia')"></div><div class="button subtract" onclick="Subtract('fDriveInertia')"></div></td></tr>
+                    <tr><td>fClutchChangeRateScaleUpShift</td><td><div class="refresh-btn" onclick="restorePreviousValue('fClutchChangeRateScaleUpShift')">&#x21bb;</div></td><td><div class="value"><input id="fClutchChangeRateScaleUpShift" placeholder="0.0" class="base-input" type="number" step="0.01" value="0.0"><input id="fClutchChangeRateScaleUpShiftCurr" placeholder="0.0" class="curr-input" type="number" step="0.01" value="0.0" readonly></div><div class="button add" onclick="Add('fClutchChangeRateScaleUpShift')"></div><div class="button subtract" onclick="Subtract('fClutchChangeRateScaleUpShift')"></div></td></tr>
+                    <tr><td>fClutchChangeRateScaleDownShift</td><td><div class="refresh-btn" onclick="restorePreviousValue('fClutchChangeRateScaleDownShift')">&#x21bb;</div></td><td><div class="value"><input id="fClutchChangeRateScaleDownShift" placeholder="0.0" class="base-input" type="number" step="0.01" value="0.0"><input id="fClutchChangeRateScaleDownShiftCurr" placeholder="0.0" class="curr-input" type="number" step="0.01" value="0.0" readonly></div><div class="button add" onclick="Add('fClutchChangeRateScaleDownShift')"></div><div class="button subtract" onclick="Subtract('fClutchChangeRateScaleDownShift')"></div></td></tr>
+                    <tr><td>fInitialDriveMaxFlatVel</td><td><div class="refresh-btn" onclick="restorePreviousValue('fInitialDriveMaxFlatVel')">&#x21bb;</div></td><td><div class="value"><input id="fInitialDriveMaxFlatVel" placeholder="0.0" class="base-input" type="number" value="0.0"><input id="fInitialDriveMaxFlatVelCurr" placeholder="0.0" class="curr-input" type="number" value="0.0" readonly></div><div class="button add" onclick="Add('fInitialDriveMaxFlatVel')"></div><div class="button subtract" onclick="Subtract('fInitialDriveMaxFlatVel')"></div></td></tr>
+                    <tr><td>fBrakeForce</td><td><div class="refresh-btn" onclick="restorePreviousValue('fBrakeForce')">&#x21bb;</div></td><td><div class="value"><input id="fBrakeForce" placeholder="0.0" class="base-input" type="number" step="0.01" value="0.0"><input id="fBrakeForceCurr" placeholder="0.0" class="curr-input" type="number" step="0.01" value="0.0" readonly></div><div class="button add" onclick="Add('fBrakeForce')"></div><div class="button subtract" onclick="Subtract('fBrakeForce')"></div></td></tr>
+                    <tr><td>fBrakeBiasFront</td><td><div class="refresh-btn" onclick="restorePreviousValue('fBrakeBiasFront')">&#x21bb;</div></td><td><div class="value"><input id="fBrakeBiasFront" placeholder="0.0" class="base-input" type="number" step="0.01" value="0.0"><input id="fBrakeBiasFrontCurr" placeholder="0.0" class="curr-input" type="number" step="0.01" value="0.0" readonly></div><div class="button add" onclick="Add('fBrakeBiasFront')"></div><div class="button subtract" onclick="Subtract('fBrakeBiasFront')"></div></td></tr>
+                    <tr><td>fHandBrakeForce</td><td><div class="refresh-btn" onclick="restorePreviousValue('fHandBrakeForce')">&#x21bb;</div></td><td><div class="value"><input id="fHandBrakeForce" placeholder="0.0" class="base-input" type="number" step="0.01" value="0.0"><input id="fHandBrakeForceCurr" placeholder="0.0" class="curr-input" type="number" step="0.01" value="0.0" readonly></div><div class="button add" onclick="Add('fHandBrakeForce')"></div><div class="button subtract" onclick="Subtract('fHandBrakeForce')"></div></td></tr>
+                    <tr><td>fSteeringLock</td><td><div class="refresh-btn" onclick="restorePreviousValue('fSteeringLock')">&#x21bb;</div></td><td><div class="value"><input id="fSteeringLock" placeholder="0.0" class="base-input" type="number" value="0.0"><input id="fSteeringLockCurr" placeholder="0.0" class="curr-input" type="number" value="0.0" readonly></div><div class="button add" onclick="Add('fSteeringLock')"></div><div class="button subtract" onclick="Subtract('fSteeringLock')"></div></td></tr>
+                    <tr><td>fTractionCurveMax</td><td><div class="refresh-btn" onclick="restorePreviousValue('fTractionCurveMax')">&#x21bb;</div></td><td><div class="value"><input id="fTractionCurveMax" placeholder="0.0" class="base-input" type="number" step="0.01" value="0.0"><input id="fTractionCurveMaxCurr" placeholder="0.0" class="curr-input" type="number" step="0.01" value="0.0" readonly></div><div class="button add" onclick="Add('fTractionCurveMax')"></div><div class="button subtract" onclick="Subtract('fTractionCurveMax')"></div></td></tr>
+                    <tr><td>fTractionCurveMin</td><td><div class="refresh-btn" onclick="restorePreviousValue('fTractionCurveMin')">&#x21bb;</div></td><td><div class="value"><input id="fTractionCurveMin" placeholder="0.0" class="base-input" type="number" step="0.01" value="0.0"><input id="fTractionCurveMinCurr" placeholder="0.0" class="curr-input" type="number" step="0.01" value="0.0" readonly></div><div class="button add" onclick="Add('fTractionCurveMin')"></div><div class="button subtract" onclick="Subtract('fTractionCurveMin')"></div></td></tr>
+                    <tr><td>fTractionCurveLateral</td><td><div class="refresh-btn" onclick="restorePreviousValue('fTractionCurveLateral')">&#x21bb;</div></td><td><div class="value"><input id="fTractionCurveLateral" placeholder="0.0" class="base-input" type="number" step="0.01" value="0.0"><input id="fTractionCurveLateralCurr" placeholder="0.0" class="curr-input" type="number" step="0.01" value="0.0" readonly></div><div class="button add" onclick="Add('fTractionCurveLateral')"></div><div class="button subtract" onclick="Subtract('fTractionCurveLateral')"></div></td></tr>
+                    <tr><td>fTractionSpringDeltaMax</td><td><div class="refresh-btn" onclick="restorePreviousValue('fTractionSpringDeltaMax')">&#x21bb;</div></td><td><div class="value"><input id="fTractionSpringDeltaMax" placeholder="0.0" class="base-input" type="number" step="0.01" value="0.0"><input id="fTractionSpringDeltaMaxCurr" placeholder="0.0" class="curr-input" type="number" step="0.01" value="0.0" readonly></div><div class="button add" onclick="Add('fTractionSpringDeltaMax')"></div><div class="button subtract" onclick="Subtract('fTractionSpringDeltaMax')"></div></td></tr>
+                    <tr><td>fLowSpeedTractionLossMult</td><td><div class="refresh-btn" onclick="restorePreviousValue('fLowSpeedTractionLossMult')">&#x21bb;</div></td><td><div class="value"><input id="fLowSpeedTractionLossMult" placeholder="0.0" class="base-input" type="number" step="0.01" value="0.0"><input id="fLowSpeedTractionLossMultCurr" placeholder="0.0" class="curr-input" type="number" step="0.01" value="0.0" readonly></div><div class="button add" onclick="Add('fLowSpeedTractionLossMult')"></div><div class="button subtract" onclick="Subtract('fLowSpeedTractionLossMult')"></div></td></tr>
+                    <tr><td>fCamberStiffnesss</td><td><div class="refresh-btn" onclick="restorePreviousValue('fCamberStiffnesss')">&#x21bb;</div></td><td><div class="value"><input id="fCamberStiffnesss" placeholder="0.0" class="base-input" type="number" step="0.1" value="0.0"><input id="fCamberStiffnesssCurr" placeholder="0.0" class="curr-input" type="number" step="0.1" value="0.0" readonly></div><div class="button add" onclick="Add('fCamberStiffnesss')"></div><div class="button subtract" onclick="Subtract('fCamberStiffnesss')"></div></td></tr>
+                    <tr><td>fTractionBiasFront</td><td><div class="refresh-btn" onclick="restorePreviousValue('fTractionBiasFront')">&#x21bb;</div></td><td><div class="value"><input id="fTractionBiasFront" placeholder="0.0" class="base-input" type="number" step="0.01" value="0.0"><input id="fTractionBiasFrontCurr" placeholder="0.0" class="curr-input" type="number" step="0.01" value="0.0" readonly></div><div class="button add" onclick="Add('fTractionBiasFront')"></div><div class="button subtract" onclick="Subtract('fTractionBiasFront')"></div></td></tr>
+                    <tr><td>fTractionLossMult</td><td><div class="refresh-btn" onclick="restorePreviousValue('fTractionLossMult')">&#x21bb;</div></td><td><div class="value"><input id="fTractionLossMult" placeholder="0.0" class="base-input" type="number" value="0.0"><input id="fTractionLossMultCurr" placeholder="0.0" class="curr-input" type="number" value="0.0" readonly></div><div class="button add" onclick="Add('fTractionLossMult')"></div><div class="button subtract" onclick="Subtract('fTractionLossMult')"></div></td></tr>
+                    <tr><td>fSuspensionForce</td><td><div class="refresh-btn" onclick="restorePreviousValue('fSuspensionForce')">&#x21bb;</div></td><td><div class="value"><input id="fSuspensionForce" placeholder="0.0" class="base-input" type="number" step="0.1" value="0.0"><input id="fSuspensionForceCurr" placeholder="0.0" class="curr-input" type="number" step="0.1" value="0.0" readonly></div><div class="button add" onclick="Add('fSuspensionForce')"></div><div class="button subtract" onclick="Subtract('fSuspensionForce')"></div></td></tr>
+                    <tr><td>fSuspensionCompDamp</td><td><div class="refresh-btn" onclick="restorePreviousValue('fSuspensionCompDamp')">&#x21bb;</div></td><td><div class="value"><input id="fSuspensionCompDamp" placeholder="0.0" class="base-input" type="number" step="0.1" value="0.0"><input id="fSuspensionCompDampCurr" placeholder="0.0" class="curr-input" type="number" step="0.1" value="0.0" readonly></div><div class="button add" onclick="Add('fSuspensionCompDamp')"></div><div class="button subtract" onclick="Subtract('fSuspensionCompDamp')"></div></td></tr>
+                    <tr><td>fSuspensionReboundDamp</td><td><div class="refresh-btn" onclick="restorePreviousValue('fSuspensionReboundDamp')">&#x21bb;</div></td><td><div class="value"><input id="fSuspensionReboundDamp" placeholder="0.0" class="base-input" type="number" step="0.1" value="0.0"><input id="fSuspensionReboundDampCurr" placeholder="0.0" class="curr-input" type="number" step="0.1" value="0.0" readonly></div><div class="button add" onclick="Add('fSuspensionReboundDamp')"></div><div class="button subtract" onclick="Subtract('fSuspensionReboundDamp')"></div></td></tr>
+                    <tr><td>fSuspensionUpperLimit</td><td><div class="refresh-btn" onclick="restorePreviousValue('fSuspensionUpperLimit')">&#x21bb;</div></td><td><div class="value"><input id="fSuspensionUpperLimit" placeholder="0.0" class="base-input" type="number" step="0.01" value="0.0"><input id="fSuspensionUpperLimitCurr" placeholder="0.0" class="curr-input" type="number" step="0.01" value="0.0" readonly></div><div class="button add" onclick="Add('fSuspensionUpperLimit')"></div><div class="button subtract" onclick="Subtract('fSuspensionUpperLimit')"></div></td></tr>
+                    <tr><td>fSuspensionLowerLimit</td><td><div class="refresh-btn" onclick="restorePreviousValue('fSuspensionLowerLimit')">&#x21bb;</div></td><td><div class="value"><input id="fSuspensionLowerLimit" placeholder="0.0" class="base-input" type="number" step="0.01" value="0.0"><input id="fSuspensionLowerLimitCurr" placeholder="0.0" class="curr-input" type="number" step="0.01" value="0.0" readonly></div><div class="button add" onclick="Add('fSuspensionLowerLimit')"></div><div class="button subtract" onclick="Subtract('fSuspensionLowerLimit')"></div></td></tr>
+                    <tr><td>fSuspensionRaise</td><td><div class="refresh-btn" onclick="restorePreviousValue('fSuspensionRaise')">&#x21bb;</div></td><td><div class="value"><input id="fSuspensionRaise" placeholder="0.0" class="base-input" type="number" step="0.01" value="0.0"><input id="fSuspensionRaiseCurr" placeholder="0.0" class="curr-input" type="number" step="0.01" value="0.0" readonly></div><div class="button add" onclick="Add('fSuspensionRaise')"></div><div class="button subtract" onclick="Subtract('fSuspensionRaise')"></div></td></tr>
+                    <tr><td>fSuspensionBiasFront</td><td><div class="refresh-btn" onclick="restorePreviousValue('fSuspensionBiasFront')">&#x21bb;</div></td><td><div class="value"><input id="fSuspensionBiasFront" placeholder="0.0" class="base-input" type="number" value="0.0"><input id="fSuspensionBiasFrontCurr" placeholder="0.0" class="curr-input" type="number" value="0.0" readonly></div><div class="button add" onclick="Add('fSuspensionBiasFront')"></div><div class="button subtract" onclick="Subtract('fSuspensionBiasFront')"></div></td></tr>
+                    <tr><td>fAntiRollBarForce</td><td><div class="refresh-btn" onclick="restorePreviousValue('fAntiRollBarForce')">&#x21bb;</div></td><td><div class="value"><input id="fAntiRollBarForce" placeholder="0.0" class="base-input" type="number" step="0.01" value="0.0"><input id="fAntiRollBarForceCurr" placeholder="0.0" class="curr-input" type="number" step="0.01" value="0.0" readonly></div><div class="button add" onclick="Add('fAntiRollBarForce')"></div><div class="button subtract" onclick="Subtract('fAntiRollBarForce')"></div></td></tr>
+                    <tr><td>fAntiRollBarBiasFront</td><td><div class="refresh-btn" onclick="restorePreviousValue('fAntiRollBarBiasFront')">&#x21bb;</div></td><td><div class="value"><input id="fAntiRollBarBiasFront" placeholder="0.0" class="base-input" type="number" step="0.01" value="0.0"><input id="fAntiRollBarBiasFrontCurr" placeholder="0.0" class="curr-input" type="number" step="0.01" value="0.0" readonly></div><div class="button add" onclick="Add('fAntiRollBarBiasFront')"></div><div class="button subtract" onclick="Subtract('fAntiRollBarBiasFront')"></div></td></tr>
+                    <tr><td>fRollCentreHeightFront</td><td><div class="refresh-btn" onclick="restorePreviousValue('fRollCentreHeightFront')">&#x21bb;</div></td><td><div class="value"><input id="fRollCentreHeightFront" placeholder="0.0" class="base-input" type="number" step="0.01" value="0.0"><input id="fRollCentreHeightFrontCurr" placeholder="0.0" class="curr-input" type="number" step="0.01" value="0.0" readonly></div><div class="button add" onclick="Add('fRollCentreHeightFront')"></div><div class="button subtract" onclick="Subtract('fRollCentreHeightFront')"></div></td></tr>
+                    <tr><td>fRollCentreHeightRear</td><td><div class="refresh-btn" onclick="restorePreviousValue('fRollCentreHeightRear')">&#x21bb;</div></td><td><div class="value"><input id="fRollCentreHeightRear" placeholder="0.0" class="base-input" type="number" step="0.01" value="0.0"><input id="fRollCentreHeightRearCurr" placeholder="0.0" class="curr-input" type="number" step="0.01" value="0.0" readonly></div><div class="button add" onclick="Add('fRollCentreHeightRear')"></div><div class="button subtract" onclick="Subtract('fRollCentreHeightRear')"></div></td></tr>
+                    <tr><td>fCollisionDamageMult</td><td><div class="refresh-btn" onclick="restorePreviousValue('fCollisionDamageMult')">&#x21bb;</div></td><td><div class="value"><input id="fCollisionDamageMult" placeholder="0.0" class="base-input" type="number" value="0.0"><input id="fCollisionDamageMultCurr" placeholder="0.0" class="curr-input" type="number" value="0.0" readonly></div><div class="button add" onclick="Add('fCollisionDamageMult')"></div><div class="button subtract" onclick="Subtract('fCollisionDamageMult')"></div></td></tr>
+                    <tr><td>fWeaponDamageMult</td><td><div class="refresh-btn" onclick="restorePreviousValue('fWeaponDamageMult')">&#x21bb;</div></td><td><div class="value"><input id="fWeaponDamageMult" placeholder="0.0" class="base-input" type="number" value="0.0"><input id="fWeaponDamageMultCurr" placeholder="0.0" class="curr-input" type="number" value="0.0" readonly></div><div class="button add" onclick="Add('fWeaponDamageMult')"></div><div class="button subtract" onclick="Subtract('fWeaponDamageMult')"></div></td></tr>
+                    <tr><td>fDeformationDamageMult</td><td><div class="refresh-btn" onclick="restorePreviousValue('fDeformationDamageMult')">&#x21bb;</div></td><td><div class="value"><input id="fDeformationDamageMult" placeholder="0.0" class="base-input" type="number" step="0.01" value="0.0"><input id="fDeformationDamageMultCurr" placeholder="0.0" class="curr-input" type="number" step="0.01" value="0.0" readonly></div><div class="button add" onclick="Add('fDeformationDamageMult')"></div><div class="button subtract" onclick="Subtract('fDeformationDamageMult')"></div></td></tr>
+                    <tr><td>fEngineDamageMult</td><td><div class="refresh-btn" onclick="restorePreviousValue('fEngineDamageMult')">&#x21bb;</div></td><td><div class="value"><input id="fEngineDamageMult" placeholder="0.0" class="base-input" type="number" value="0.0"><input id="fEngineDamageMultCurr" placeholder="0.0" class="curr-input" type="number" value="0.0" readonly></div><div class="button add" onclick="Add('fEngineDamageMult')"></div><div class="button subtract" onclick="Subtract('fEngineDamageMult')"></div></td></tr>
+                    <tr><td>fPetrolTankVolume</td><td><div class="refresh-btn" onclick="restorePreviousValue('fPetrolTankVolume')">&#x21bb;</div></td><td><div class="value"><input id="fPetrolTankVolume" placeholder="0.0" class="base-input" type="number" value="0.0"><input id="fPetrolTankVolumeCurr" placeholder="0.0" class="curr-input" type="number" value="0.0" readonly></div><div class="button add" onclick="Add('fPetrolTankVolume')"></div><div class="button subtract" onclick="Subtract('fPetrolTankVolume')"></div></td></tr>
+                    <tr><td>fOilVolume</td><td><div class="refresh-btn" onclick="restorePreviousValue('fOilVolume')">&#x21bb;</div></td><td><div class="value"><input id="fOilVolume" placeholder="0.0" class="base-input" type="number" value="0.0"><input id="fOilVolumeCurr" placeholder="0.0" class="curr-input" type="number" value="0.0" readonly></div><div class="button add" onclick="Add('fOilVolume')"></div><div class="button subtract" onclick="Subtract('fOilVolume')"></div></td></tr>
+                    <tr><td>fSeatOffsetDistX</td><td><div class="refresh-btn" onclick="restorePreviousValue('fSeatOffsetDistX')">&#x21bb;</div></td><td><div class="value"><input id="fSeatOffsetDistX" placeholder="0.0" class="base-input" type="number" step="0.01" value="0.0"><input id="fSeatOffsetDistXCurr" placeholder="0.0" class="curr-input" type="number" step="0.01" value="0.0" readonly></div><div class="button add" onclick="Add('fSeatOffsetDistX')"></div><div class="button subtract" onclick="Subtract('fSeatOffsetDistX')"></div></td></tr>
+                    <tr><td>fSeatOffsetDistY</td><td><div class="refresh-btn" onclick="restorePreviousValue('fSeatOffsetDistY')">&#x21bb;</div></td><td><div class="value"><input id="fSeatOffsetDistY" placeholder="0.0" class="base-input" type="number" step="0.01" value="0.0"><input id="fSeatOffsetDistYCurr" placeholder="0.0" class="curr-input" type="number" step="0.01" value="0.0" readonly></div><div class="button add" onclick="Add('fSeatOffsetDistY')"></div><div class="button subtract" onclick="Subtract('fSeatOffsetDistY')"></div></td></tr>
+                    <tr><td>fSeatOffsetDistZ</td><td><div class="refresh-btn" onclick="restorePreviousValue('fSeatOffsetDistZ')">&#x21bb;</div></td><td><div class="value"><input id="fSeatOffsetDistZ" placeholder="0.0" class="base-input" type="number" step="0.01" value="0.0"><input id="fSeatOffsetDistZCurr" placeholder="0.0" class="curr-input" type="number" step="0.01" value="0.0" readonly></div><div class="button add" onclick="Add('fSeatOffsetDistZ')"></div><div class="button subtract" onclick="Subtract('fSeatOffsetDistZ')"></div></td></tr>
+                    <tr><td>nMonetaryValue</td><td><div class="refresh-btn" onclick="restorePreviousValue('nMonetaryValue')">&#x21bb;</div></td><td><div class="value"><input id="nMonetaryValue" placeholder="0" class="base-input" type="number" value="0"><input id="nMonetaryValueCurr" placeholder="0" class="curr-input" type="number" value="0" readonly></div><div class="button add" onclick="Add('nMonetaryValue')"></div><div class="button subtract" onclick="Subtract('nMonetaryValue')"></div></td></tr>
+                    <tr><td>strModelFlags</td><td><div class="refresh-btn" onclick="restorePreviousValue('strModelFlags')">&#x21bb;</div></td><td><div class="value"><input id="strModelFlags" placeholder="0" class="base-input" type="number" value="0"><input id="strModelFlagsCurr" placeholder="0" class="curr-input" type="number" value="0" readonly></div><div class="button add" onclick="Add('strModelFlags')"></div><div class="button subtract" onclick="Subtract('strModelFlags')"></div></td></tr>
+                    <tr><td>strHandlingFlags</td><td><div class="refresh-btn" onclick="restorePreviousValue('strHandlingFlags')">&#x21bb;</div></td><td><div class="value"><input id="strHandlingFlags" placeholder="0" class="base-input" type="number" value="0"><input id="strHandlingFlagsCurr" placeholder="0" class="curr-input" type="number" value="0" readonly></div><div class="button add" onclick="Add('strHandlingFlags')"></div><div class="button subtract" onclick="Subtract('strHandlingFlags')"></div></td></tr>
+                    <tr><td>strModelFlags</td><td><div class="refresh-btn" onclick="restorePreviousValue('strModelFlags')">&#x21bb;</div></td><td><div class="value"><input id="strModelFlags" placeholder="0" class="base-input" type="number" value="0"><input id="strModelFlagsCurr" placeholder="0" class="curr-input" type="number" value="0" readonly></div><div class="button add" onclick="Add('strModelFlags')"></div><div class="button subtract" onclick="Subtract('strModelFlags')"></div></td></tr>
+                    
+                </tbody>
+            </table>
+        </div>
+
+            <!-- Stats Container -->
+        <div id="stats-container">
+            <!-- Vehicle Stats Table -->
+            <table id="stats-table">
+                <thead>
+                    <tr>
+                        <th>Stat</th>
+                        <th>Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Stats will be dynamically populated -->
+                </tbody>
+            </table>
+
+            <!-- Performance Test Button -->
+            <button id="performance-test-button">Start Performance Test</button>
+
+            <!-- Performance Metrics Table -->
+            <table id="performance-metrics-table">
+                <thead>
+                    <tr>
+                        <th>Performance Metric</th>
+                        <th>Result</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Performance metrics will be displayed here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<div class="resize-handle top"></div>
+<div class="resize-handle right"></div>
+<div class="resize-handle bottom"></div>
+<div class="resize-handle left"></div>
+<div id="export" onclick="Export()"></div>
+<div id="info-window-container"></div>
+</div>
+</body>
+</html>
+
